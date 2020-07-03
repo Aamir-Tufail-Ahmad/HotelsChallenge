@@ -24,6 +24,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -86,8 +89,8 @@ public class home_page extends Fragment {
         downloadBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startDownloading();
-                Toast.makeText(getContext(), "Download Button Pressed", Toast.LENGTH_SHORT).show();
+                //startDownloading();
+                Toast.makeText(getContext(), "Download Button Pressed. URL Unreachable. To continue with dummy data - Press Load Data", Toast.LENGTH_SHORT).show();
                 Log.d("Download Button", "Button Pressed");
             }
         });
@@ -111,7 +114,22 @@ public class home_page extends Fragment {
                 }
                 catch (IOException e) {
                     //You'll need to add proper error handling here
-                    homeTextView.setText("Error");
+                    homeTextView.setText("Error, not reachable online. Using dummy data");
+                    InputStream is =  getResources().openRawResource(R.raw.gethotels);
+                    try {
+                        BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        String line;
+
+                        while ((line = br.readLine()) != null) {
+                            text.append(line);
+                            text.append('\n');
+                        }
+                        br.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+
+                    }
+
                 }
 
                 try {
@@ -120,13 +138,13 @@ public class home_page extends Fragment {
                     homeTextView.setText(homeTextView.getText()+"\n\n"+"Done");
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    homeTextView.setText(homeTextView.getText()+"\n\n"+"Fail");
+                    homeTextView.setText(homeTextView.getText()+"\n\n"+"Critical Failure");
                 }
                 if(MainActivity.HotelsList==null){
-                    homeTextView.setText(homeTextView.getText()+"\n\n"+null);
+                    homeTextView.setText(homeTextView.getText()+"\n\n"+"Failed");
                 }else{
                     HotelsClass htemp= (HotelsClass) MainActivity.HotelsList.get(0);
-                    homeTextView.setText(homeTextView.getText()+"\n\n"+"Success");
+                    homeTextView.setText(homeTextView.getText()+"\n\n"+"Success, Click Load Data and proceed");
                 }
             }
         });
@@ -152,15 +170,20 @@ public class home_page extends Fragment {
     }
 
     private void startDownloading() {
-        String myURL= "https://cdn.vox-cdn.com/thumbor/BlE1vvjUCAR6k03nbUTN1zZuO4c=/0x0:2040x1360/1200x800/filters:focal(857x517:1183x843)/cdn.vox-cdn.com/uploads/chorus_image/image/56216025/jbareham_170504_1691_0020.0.0.jpg";
+
+        //URL of api
+        //String myURL= "https://cdn.vox-cdn.com/thumbor/BlE1vvjUCAR6k03nbUTN1zZuO4c=/0x0:2040x1360/1200x800/filters:focal(857x517:1183x843)/cdn.vox-cdn.com/uploads/chorus_image/image/56216025/jbareham_170504_1691_0020.0.0.jpg";
+        //String myURL="http://localhost:8080/getHotels";
+        String myURL="174.254.2.23:8080/getHotels";
+
         DownloadManager.Request requests=new DownloadManager.Request(Uri.parse(myURL));
         requests.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE|DownloadManager.Request.NETWORK_WIFI);
         requests.setTitle("Download");
         requests.setDescription("Downloading Files");
 
         requests.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        requests.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"MMTHotels.txt");
-        Log.d("Download Location",Environment.DIRECTORY_DOWNLOADS+"MMTHotels.txt");
+        requests.setDestinationInExternalFilesDir(getContext(),Environment.DIRECTORY_DOWNLOADS,"getHotels.json");
+        Log.d("Download Location",Environment.DIRECTORY_DOWNLOADS+"getHotels.json");
         DownloadManager manager=(DownloadManager)getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
         manager.enqueue(requests);
         //"/storage/self/primary/Download/MMTHotels.txt"
